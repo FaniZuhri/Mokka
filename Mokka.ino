@@ -330,6 +330,8 @@ void loop()
   DateTime now = rtc.now();
 
   uint32_t start = micros();
+
+  mainDisplay();
   hum = SHT2x.GetHumidity();
   temp = SHT2x.GetTemperature();
   if (hum <= 0 && temp <= 0)
@@ -341,6 +343,7 @@ void loop()
   Serial.print(hum, 0);
   Serial.print("\tTemperature(C): ");
   Serial.print(temp, 0);
+  mainDisplay();
 
   uint32_t stop = micros();
   Serial.print("\tRead Time: ");
@@ -350,7 +353,8 @@ void loop()
   //amonia
   MQ135.update();           // Update data, the arduino will be read the voltage on the analog pin
   amo = MQ135.readSensor(); // Sensor will read PPM concentration using the model and a and b values setted before or in the setup
-  ppm = amo;
+//   ppm = amo;
+  mainDisplay();
   Serial.println(amo);
   //  MQ135.serialDebug(); // Will print the table on the serial port
   delay(500); //Sampling frequency
@@ -372,24 +376,6 @@ void loop()
     rest.handle(client);
     kirim_data();
   }
-
-  // Serial.print(fTempMin);
-  // Serial.print(" ");
-  // Serial.print(fTempMax);
-  // Serial.print(" ");
-  // Serial.print(fan1);
-  // Serial.print(" ");
-  // Serial.print(fan2);
-  // Serial.print(" ");
-  // Serial.print(fan3);
-  // Serial.print(" ");
-  // Serial.print(fan4);
-  // Serial.print(" ");
-  // Serial.print(cooler1);
-  // Serial.print(" ");
-  // Serial.println(heater1);
-  // delay(1000);
-  // #include "displayMenu.h"
 
 switch (state)
 {
@@ -1851,7 +1837,7 @@ void homeDisplay()
   lcd.setCursor(0, 0);
   lcd.print("  Mokka PT.Mustika");
   lcd.setCursor(0, 1);
-  lcd.print("   ");
+  lcd.print("  ");
   lcd.print(dayOfMonth, DEC);
   lcd.print("-");
   lcd.print(month, DEC);
@@ -1867,3 +1853,67 @@ void homeDisplay()
   lcd.print("  ");
 }
 //------------------END of HOME DISPLAY ----------------------//
+
+//----------------------- MAIN DISPLAY --------------------------//
+void mainDisplay()
+{
+  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+
+  Serial.print(dayOfMonth, DEC);
+  Serial.print("-");
+  Serial.print(month, DEC);
+  Serial.print("-");
+  Serial.print("20");
+  Serial.print(year, DEC);
+  Serial.print(" ");
+
+  Serial.print(hour, DEC);
+  // convert the byte variable to a decimal number when displayed
+  Serial.print(":");
+  if (minute < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(minute, DEC);
+  Serial.print(":");
+  if (second < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.println(second, DEC);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  ");
+  lcd.print(dayOfMonth, DEC);
+  lcd.print("-");
+  lcd.print(month, DEC);
+  lcd.print("-");
+  lcd.print("20");
+  lcd.print(year, DEC);
+  lcd.print(" ");
+  lcd.print(hour, DEC);
+  lcd.print(":");
+  if (minute < 10)
+    lcd.print("0");
+  lcd.print(minute, DEC);
+  lcd.print("  ");
+
+  lcd.setCursor(0,1);
+  lcd.print("AMO:");
+  lcd.print(amo);
+  lcd.print("  ppm");
+
+  lcd.setCursor(0,2);
+  lcd.print("T/H:");
+  lcd.print(temp);
+  lcd.print(char(223));
+  lcd.print("C/");
+  lcd.print(hum);
+  lcd.print("%");
+
+  lcd.setCursor(0,3);
+  lcd.print("WS :");
+  lcd.print("10.44");
+  lcd.print("  m/s");
+}
+//------------------END of MAIN DISPLAY ----------------------//

@@ -285,11 +285,11 @@ void setup()
   Serial.print("Connecting to: ");
   Serial.print(ssid);
   Serial.print(" ");
+
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Connecting to.. ");
-  lcd.setCursor(0, 1);
-  lcd.print(ssid);
+  homeDisplay();
+  lcd.setCursor(0, 2);
+  lcd.print("Connecting to WiFi..");
 
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -297,14 +297,27 @@ void setup()
     Serial.print(".");
   }
 
-  lcd.clear();
-  lcd.setCursor(0, 1);
-  lcd.print("WiFi Connected!");
-  delay(2000);
+  lcd.setCursor(0, 3);
+  lcd.print("Connected!");
+  delay(1000);
 
   WiFi.softAP(ssidAP, passwordAP);
+  IPAddress myIP = WiFi.softAPIP();
+  AP_IP = myIP;
+  Serial.print("AP IP address: ");
+  Serial.println(AP_IP);
+  
+  lcd.clear();
+  homeDisplay();
+  Serial.println("Server started");
+  lcd.setCursor(0, 2);
+  lcd.print("Server started");
+  lcd.setCursor(0, 3);
+  lcd.print(AP_IP);
+  
   server.begin();
-  Serial.println(WiFi.localIP());
+  delay(3000);
+  lcd.clear();
 }
 
 void loop()
@@ -1603,7 +1616,7 @@ case ya:
 }
 
 
-/* Functions */
+/********************************* Functions For Controlling *****************************************/
 
 int apiFan1(String command)
 {
@@ -1735,6 +1748,9 @@ void printMessage(int value)
   Serial.println("");
 }
 
+/********************* End Controlling **********************/
+
+/************************* RTC *******************************/
 void rtc_writetovar()
 {
   //rtc
@@ -1759,6 +1775,10 @@ byte bcdToDec(byte val)
   return ((val / 16 * 10) + (val % 16));
 }
 
+/************************************** END RTC *****************************/
+
+
+/*************************** SEND DATA TO SERVER **************************/
 void kirim_data()
 {
   if (current - previous >= interval)
@@ -1779,10 +1799,6 @@ void kirim_data()
     String sensor11 = "maxtemp";
 
     rtc_writetovar();
-    //    int temp = 26;
-    // float amon = 5.2;
-    //    int humid = 60;
-    //    int fan3 = 1500; fan4 = 1500; cooler1 = 500; heater1 = 600; timeron = 5; timeroff = 5; timeron1 = 10; timeroff1 = 10; timeron2 = 20; timeroff2 = 20;
     String postData = (String) "&sn=" + sn + "&dgw=" + year + "-" + month + "-" + dayOfMonth + "&tgw=" + hour + ":" + minute + ":" + second +
                       "&sensor=" + sensor1 + "x" + sensor2 + "x" + sensor3 + "x" + sensor4 + "x" + sensor5 + "x" + sensor6 + "x" + sensor7 + "x" + sensor8 + "x" + sensor9 + "x" + sensor10 + "x" + sensor11 + 
                       "&nilai=" + temp + "x" + ppm + "x" + hum + "x" + fan1 + "x" + fan2 + "x" + fan3 + "x" + fan4 + "x" + cooler1 + "x" + heater1 + "x" + fTempMin + "x" + fTempMax;
@@ -1801,3 +1817,53 @@ void kirim_data()
     // rest.handle(client);
   }
 }
+
+/********************** END SEND DATA ******************************/
+
+//----------------------- HOME DISPLAY --------------------------//
+void homeDisplay()
+{
+  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+
+  Serial.print(dayOfMonth, DEC);
+  Serial.print("-");
+  Serial.print(month, DEC);
+  Serial.print("-");
+  Serial.print("20");
+  Serial.print(year, DEC);
+  Serial.print(" ");
+
+  Serial.print(hour, DEC);
+  // convert the byte variable to a decimal number when displayed
+  Serial.print(":");
+  if (minute < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(minute, DEC);
+  Serial.print(":");
+  if (second < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.println(second, DEC);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  Mokka PT.Mustika");
+  lcd.setCursor(0, 1);
+  lcd.print("   ");
+  lcd.print(dayOfMonth, DEC);
+  lcd.print("-");
+  lcd.print(month, DEC);
+  lcd.print("-");
+  lcd.print("20");
+  lcd.print(year, DEC);
+  lcd.print(" ");
+  lcd.print(hour, DEC);
+  lcd.print(":");
+  if (minute < 10)
+    lcd.print("0");
+  lcd.print(minute, DEC);
+  lcd.print("  ");
+}
+//------------------END of HOME DISPLAY ----------------------//

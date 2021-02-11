@@ -19,7 +19,8 @@
 
 int addrfan[4] = {2, 4, 6, 8};
 int addrheat = 10, addrcool = 12, addrFanTempMin = 16, addrFanTempMax = 14,
-    addrHeatMin = 16, addrHeatMax = 18, addrCoolMin = 20, addrCoolMax = 22;
+    addrHeatMin = 16, addrHeatMax = 18, addrCoolMin = 20, addrCoolMax = 22,
+    addrppmTres = 24;
 int addr = 0;
 
 #define EEPROM_SIZE 100
@@ -31,7 +32,7 @@ const char *passwordAP = "mustikajaya";
 const char *ssid = "Mie Goyeng";
 const char *password = "digodogsek";
 
-int fan1, fan2, fan3, fan4, cooler1, heater1, delayButton = 100, hTempMax, hTempMin, cTempMax, cTempMin;
+int fan1, fan2, fan3, fan4, cooler1, heater1, delayButton = 100, hTempMax, hTempMin, cTempMax, cTempMin, ppmTres;
 int menu, state, stateFTMax, stateFTMin, stateHTMax, stateHTMin, stateCTMax, stateCTMin, count, adc, fTempMin, fTempMax;
 float ppm, temp, hum;
 
@@ -48,6 +49,7 @@ int apiHTempMin(String command);
 int apiHTempMax(String command);
 int apiCTempMin(String command);
 int apiCTempMax(String command);
+int apiPpmTres(String command);
 
 // Create aREST instance
 aREST rest = aREST();
@@ -186,65 +188,7 @@ void setup()
   pinMode(ledPin6, OUTPUT);
 
   //read var value from eeprom
-  fan1 = EEPROM.read(addrfan[0]);
-  if (fan1 > 1)
-  {
-    fan1 = 1;
-    EEPROM.write(addrfan[0], fan1);
-    EEPROM.commit();
-  }
-  fan2 = EEPROM.read(addrfan[1]);
-  if (fan2 > 1)
-  {
-    fan2 = 1;
-    EEPROM.write(addrfan[1], fan2);
-    EEPROM.commit();
-  }
-  fan3 = EEPROM.read(addrfan[2]);
-  if (fan3 > 1)
-  {
-    fan3 = 1;
-    EEPROM.write(addrfan[2], fan3);
-    EEPROM.commit();
-  }
-  fan4 = EEPROM.read(addrfan[3]);
-  if (fan4 > 1)
-  {
-    fan4 = 1;
-    EEPROM.write(addrfan[3], fan4);
-    EEPROM.commit();
-  }
-  cooler1 = EEPROM.read(addrcool);
-  if (cooler1 > 1)
-  {
-    cooler1 = 1;
-    EEPROM.write(addrcool, cooler1);
-    EEPROM.commit();
-  }
-  heater1 = EEPROM.read(addrheat);
-  if (heater1 > 1)
-  {
-    heater1 = 0;
-    EEPROM.write(addrheat, heater1);
-    EEPROM.commit();
-  }
-  fTempMin = EEPROM.read(addrFanTempMin);
-  if (fTempMin > 100)
-  {
-    fTempMin = 20;
-    EEPROM.write(addrFanTempMin, fTempMin);
-    EEPROM.commit();
-  }
-  fTempMax = EEPROM.read(addrFanTempMax);
-  if (fTempMax > 100)
-  {
-    fTempMax = 50;
-    EEPROM.write(addrFanTempMax, fTempMax);
-    EEPROM.commit();
-  }
-  temp = 24;
-  hum = 70;
-  ppm = 5;
+  readFromEEPROM();
 
   //initialize variable and function in rest
   rest.variable("temperature", &temp);
@@ -262,6 +206,7 @@ void setup()
   rest.variable("hmaxtemp", &hTempMax);
   rest.variable("cmintemp", &cTempMin);
   rest.variable("cmaxtemp", &cTempMax);
+  rest.variable("ppmtres", &ppmTres);
 
   rest.function("apiFan1", apiFan1);
   rest.function("apiFan2", apiFan2);
@@ -275,6 +220,7 @@ void setup()
   rest.function("apiHTempMax", apiHTempMax);
   rest.function("apiCTempMin", apiCTempMin);
   rest.function("apiCTempMax", apiCTempMax);
+  rest.function("apiPpmTres", apiPpmTres);
 
   // Give name & ID to the device (ID should be 6 characters long)
   rest.set_id("1");
@@ -1724,6 +1670,16 @@ int apiCTempMax(String command)
   return 1;
 }
 
+int apiPpmTres(String command)
+{
+    //Get state from command
+    int ppmTresState = command.toInt();
+    EEPROM.write(addrppmTres, ppmTresState);
+    EEPROM.commit();
+    printMessage(ppmTresState);
+    return 1;
+}
+
 void printMessage(int value)
 {
   Serial.println("");
@@ -1917,3 +1873,95 @@ void mainDisplay()
   lcd.print("  m/s");
 }
 //------------------END of MAIN DISPLAY ----------------------//
+
+/******************** READ VARIABLES FORM EEPROM ************************/
+void readFromEEPROM()
+{
+    fan1 = EEPROM.read(addrfan[0]);
+  if (fan1 > 1)
+  {
+    fan1 = 1;
+    EEPROM.write(addrfan[0], fan1);
+    EEPROM.commit();
+  }
+  fan2 = EEPROM.read(addrfan[1]);
+  if (fan2 > 1)
+  {
+    fan2 = 1;
+    EEPROM.write(addrfan[1], fan2);
+    EEPROM.commit();
+  }
+  fan3 = EEPROM.read(addrfan[2]);
+  if (fan3 > 1)
+  {
+    fan3 = 1;
+    EEPROM.write(addrfan[2], fan3);
+    EEPROM.commit();
+  }
+  fan4 = EEPROM.read(addrfan[3]);
+  if (fan4 > 1)
+  {
+    fan4 = 1;
+    EEPROM.write(addrfan[3], fan4);
+    EEPROM.commit();
+  }
+  cooler1 = EEPROM.read(addrcool);
+  if (cooler1 > 1)
+  {
+    cooler1 = 1;
+    EEPROM.write(addrcool, cooler1);
+    EEPROM.commit();
+  }
+  heater1 = EEPROM.read(addrheat);
+  if (heater1 > 1)
+  {
+    heater1 = 0;
+    EEPROM.write(addrheat, heater1);
+    EEPROM.commit();
+  }
+  fTempMin = EEPROM.read(addrFanTempMin);
+  if (fTempMin > 100)
+  {
+    fTempMin = 20;
+    EEPROM.write(addrFanTempMin, fTempMin);
+    EEPROM.commit();
+  }
+  fTempMax = EEPROM.read(addrFanTempMax);
+  if (fTempMax > 100)
+  {
+    fTempMax = 50;
+    EEPROM.write(addrFanTempMax, fTempMax);
+    EEPROM.commit();
+  }
+  hTempMin = EEPROM.read(addrHeatMin);
+  if (hTempMin > 100)
+  {
+    hTempMin = 20;
+    EEPROM.write(addrHeatMin, hTempMin);
+    EEPROM.commit();
+  }
+  hTempMax = EEPROM.read(addrHeatMax);
+  if (hTempMax > 100)
+  {
+    hTempMax = 50;
+    EEPROM.write(addrHeatMax, hTempMax);
+    EEPROM.commit();
+  }
+  cTempMin = EEPROM.read(addrCoolMin);
+  if (cTempMin > 100)
+  {
+    cTempMin = 20;
+    EEPROM.write(addrCoolMin, cTempMin);
+    EEPROM.commit();
+  }
+  cTempMax = EEPROM.read(addrCoolMax);
+  if (cTempMax > 100)
+  {
+    cTempMax = 50;
+    EEPROM.write(addrCoolMax, cTempMax);
+    EEPROM.commit();
+  }
+
+}
+
+/******************** END READING ************************/

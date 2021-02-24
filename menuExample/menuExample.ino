@@ -293,10 +293,9 @@ void loop()
 
   //Read RTC
   DateTime now = rtc.now();
-  
+
   //REST Handler
   WiFiClient client = server.available();
-  rest.handle(client);
 
   //Menu Case
   switch (state)
@@ -307,6 +306,9 @@ void loop()
 
     //Display Sensor values and RTC to LCD
     mainDisplay();
+
+    //REST Handler
+    rest.handle(client);
 
     hum = SHT2x.GetHumidity();
     temp = SHT2x.GetTemperature();

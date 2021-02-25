@@ -255,8 +255,11 @@ void setup()
 
 void loop()
 {
-  //Handle client rest, taruh di loop paling atas
   WiFiClient client = server.available();
+  while(client.available()){
+    delay(1);
+    Serial.println("!client.available");
+  }
   rest.handle(client);
   current = millis();
   //rtc
@@ -309,179 +312,6 @@ void loop()
 //    rest.handle(client);
     kirim_data();
   }
-switch (state)
-  {
-  case mainMenu:
-    mainDisplay();
-    Serial.println("main");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = chooseFan1;
-      lcd.clear();
-    }
-    break;
-
-  case chooseFan1:
-    lcd.setCursor(0, 0);
-    lcd.print(">Fan 1 State");
-    lcd.setCursor(0, 1);
-    lcd.print(" Fan 2 State");
-    lcd.setCursor(0, 2);
-    lcd.print(" Fan 3 State");
-    lcd.setCursor(0, 3);
-    lcd.print(" Fan 4 State");
-    Serial.println("choose fan 1");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = fan1Setting;
-      lcd.clear();
-    }
-    if (up)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-    if (down)
-    {
-      delay(delayBtn);
-      state = chooseFan2;
-      lcd.clear();
-    }
-    if (cancel)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-  break;
-
-  case chooseFan2:
-    lcd.setCursor(0, 0);
-    lcd.print(" Fan 1 State");
-    lcd.setCursor(0, 1);
-    lcd.print(">Fan 2 State");
-    lcd.setCursor(0, 2);
-    lcd.print(" Fan 3 State");
-    lcd.setCursor(0, 3);
-    lcd.print(" Fan 4 State");
-    Serial.println("choose fan 2");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = fan2Setting;
-      lcd.clear();
-    }
-    if (up)
-    {
-      delay(delayBtn);
-      state = chooseFan1;
-      lcd.clear();
-    }
-    if (down)
-    {
-      delay(delayBtn);
-      state = chooseFan3;
-      lcd.clear();
-    }
-    if (cancel)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-  break;
-
-  case chooseFan3:
-    lcd.setCursor(0, 0);
-    lcd.print(" Fan 1 State");
-    lcd.setCursor(0, 1);
-    lcd.print(" Fan 2 State");
-    lcd.setCursor(0, 2);
-    lcd.print(">Fan 3 State");
-    lcd.setCursor(0, 3);
-    lcd.print(" Fan 4 State");
-    Serial.println("choose fan 3");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = fan3Setting;
-      lcd.clear();
-    }
-    if (up)
-    {
-      delay(delayBtn);
-      state = chooseFan2;
-      lcd.clear();
-    }
-    if (down)
-    {
-      delay(delayBtn);
-      state = chooseFan4;
-      lcd.clear();
-    }
-    if (cancel)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-  break;
-
-  case chooseFan4:
-    lcd.setCursor(0, 0);
-    lcd.print(" Fan 1 State");
-    lcd.setCursor(0, 1);
-    lcd.print(" Fan 2 State");
-    lcd.setCursor(0, 2);
-    lcd.print(" Fan 3 State");
-    lcd.setCursor(0, 3);
-    lcd.print(">Fan 4 State");
-    Serial.println("choose fan 4");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = fan4Setting;
-      lcd.clear();
-    }
-    if (up)
-    {
-      delay(delayBtn);
-      state = chooseFan3;
-      lcd.clear();
-    }
-    if (down)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-    if (cancel)
-    {
-      delay(delayBtn);
-      state = mainMenu;
-      lcd.clear();
-    }
-  break;
-
-  case fan1Setting:
-    lcd.setCursor(0, 0);
-    lcd.print("this is fan 1 set menu");
-    Serial.println("fan");
-    if (ok)
-    {
-      delay(delayBtn);
-      state = chooseFan1;
-      lcd.clear();
-    }
-    break;
-
-  default:
-    break;
-  }
-
 }
 
 
@@ -702,31 +532,7 @@ void kirim_data()
 //----------------------- HOME DISPLAY --------------------------//
 void homeDisplay()
 {
-//  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
   rtc_writetovar();
-
-//  Serial.print(dayOfMonth);
-//  Serial.print("-");
-//  Serial.print(month);
-//  Serial.print("-");
-//  Serial.print("20");
-//  Serial.print(year);
-//  Serial.print(" ");
-
-//  Serial.print(hour);
-//  // convert the byte variable to a decimal number when displayed
-//  Serial.print(":");
-//  if (minute < 10)
-//  {
-////    Serial.print("0");
-//  }
-//  Serial.print(minute);
-//  Serial.print(":");
-//  if (second < 10)
-//  {
-////    Serial.print("0");
-//  }
-//  Serial.println(second);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("  Mokka PT.Mustika");
@@ -736,7 +542,6 @@ void homeDisplay()
   lcd.print("-");
   lcd.print(month);
   lcd.print("-");
-  lcd.print("20");
   lcd.print(year);
   lcd.print(" ");
   lcd.print(hour);
@@ -751,30 +556,7 @@ void homeDisplay()
 //----------------------- MAIN DISPLAY --------------------------//
 void mainDisplay()
 {
-//  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
 rtc_writetovar();
-//  Serial.print(dayOfMonth);
-//  Serial.print("-");
-//  Serial.print(month);
-//  Serial.print("-");
-//  Serial.print("20");
-//  Serial.print(year);
-//  Serial.print(" ");
-
-//  Serial.print(hour);
-  // convert the byte variable to a decimal number when displayed
-//  Serial.print(":");
-//  if (minute < 10)
-//  {
-////    Serial.print("0");
-//  }
-//  Serial.print(minute);
-  Serial.print(":");
-//  if (second < 10)
-//  {
-////    Serial.print("0");
-//  }
-//  Serial.println(second);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("  ");
@@ -782,13 +564,10 @@ rtc_writetovar();
   lcd.print("-");
   lcd.print(month);
   lcd.print("-");
-  lcd.print("20");
   lcd.print(year);
   lcd.print(" ");
   lcd.print(hour);
   lcd.print(":");
-//  if (minute < 10)
-//    lcd.print("0");
   lcd.print(minute);
   lcd.print("  ");
 

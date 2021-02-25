@@ -27,6 +27,7 @@
 //Lib API HTTP and REST
 #include <HTTPClient.h>
 #include <aREST.h>
+#define HARDWARE "esp32"
 
 //Lib MQ137
 #include <MQUnifiedsensor.h>
@@ -35,9 +36,9 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 16 char
 RTC_DS3231 rtc;
 
 // go to aREST.h lib to config variables, functions, and buffer size
-#define OUTPUT_BUFFER_SIZE 50000
-#define NUMBER_VARIABLES 15
-#define NUMBER_FUNCTIONS 15
+#define OUTPUT_BUFFER_SIZE 
+#define NUMBER_VARIABLES 20
+#define NUMBER_FUNCTIONS 20
 
 //define EEPROM size
 #define EEPROM_SIZE 100
@@ -130,11 +131,13 @@ int okBtn = 12, upBtn = 18, downBtn = 19, cancelBtn = 13, arrowState = 1;
 
 //Fan and heater variables
 int fan1, fan2, fan3, fan4, cooler1, heater1, delayBtn = 100, hTempMax, hTempMin, cTempMax, cTempMin, ppmTres;
-int state, stateFTMax, stateFTMin, stateHTMax, stateHTMin, stateCTMax, stateCTMin, count, adc, fTempMin, fTempMax;
+int state, stateFTMax, stateFTMin, stateHTMax, stateHTMin, stateCTMax, stateCTMin, count, timeSecond, adc, fTempMin, fTempMax;
 
 //RTC variables
 char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"};
 String second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+
+int current, previous = 0, interval = 5000;
 
 //Pin for relay Fan and Heater
 const int relayFan1 = 2;    // 26
@@ -174,6 +177,11 @@ void setup()
 {
   //Start Hardware Serial
   Serial.begin(9600);
+
+#ifndef ESP8266
+  while (!Serial)
+    ;
+#endif
 
   //Start SHT21
   SHT2x.begin();
@@ -253,6 +261,10 @@ void setup()
   Serial.println("REST ID = 1 & NAME = MUSTIKA_CONTROLLER");
 
   //Connect ESP32 to WiFi
+  // You can remove the password parameter if you want the AP to be open.
+  WiFi.mode(WIFI_OFF);
+  delay(1000);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to: ");
   Serial.print(ssid);
@@ -290,12 +302,14 @@ void setup()
 
 void loop()
 {
+  current = millis();
 
   //Read RTC
   DateTime now = rtc.now();
 
   //REST Handler
   WiFiClient client = server.available();
+  rest.handle(client);
 
   //Menu Case
   switch (state)
@@ -304,6 +318,10 @@ void loop()
   //Main Menu, this case comes first as defined in void setup
   case mainMenu:
 
+    //REST Handler
+    client = server.available();
+    rest.handle(client);
+    
     //Display Sensor values and RTC to LCD
     mainDisplay();
 
@@ -312,9 +330,6 @@ void loop()
 
     //relay state
     relay(not fan1, not fan2, not fan3, not fan4, not heater1, not cooler1);
-
-    //REST Handler
-    rest.handle(client);
 
     hum = SHT2x.GetHumidity();
     temp = SHT2x.GetTemperature();
@@ -328,7 +343,7 @@ void loop()
     Serial.print("\tTemperature(C): ");
     Serial.print(temp, 0);
     mainDisplay();
-    delay(250);
+    delay(500);
 
     //amonia measurement
     MQ135.update();           // Update data, the arduino will be read the voltage on the analog pin
@@ -341,15 +356,28 @@ void loop()
     //Double check that mainMenu is active
     Serial.println("main");
 
-    //Send data sensor to server db via HTTP
-    kirim_data();
+    amo = 300 * 1000;
+    count = timeSecond;
+
+    if (timeSecond - count < amo)
+    {
+      count = timeSecond;
+    }
+
+    timeSecond = (esp_timer_get_time() * 0.000001);
+
+    if (timeSecond - count < 5)
+
+    {
+      kirim_data();
+    }
 
     //If ANY of pin pressed
     if (ok or up or down or cancel)
     {
       delay(delayBtn);
       state = chooseFan1;
-      relay(1,1,1,1,1,1);
+      relay(1, 1, 1, 1, 1, 1);
       lcd.clear();
     }
     break;
@@ -1290,7 +1318,6 @@ void mainDisplay()
   lcd.print("-");
   lcd.print(month);
   lcd.print("-");
-  lcd.print("20");
   lcd.print(year);
   lcd.print(" ");
   lcd.print(hour);
@@ -1300,7 +1327,7 @@ void mainDisplay()
 
   lcd.setCursor(0, 1);
   lcd.print("AMO:");
-  lcd.print(amo);
+  lcd.print(ppm);
   lcd.print("  ppm");
 
   lcd.setCursor(0, 2);
@@ -1438,7 +1465,6 @@ void homeDisplay()
   lcd.print("-");
   lcd.print(month);
   lcd.print("-");
-  lcd.print("20");
   lcd.print(year);
   lcd.print(" ");
   lcd.print(hour);
@@ -1594,33 +1620,35 @@ void printMessage(int value)
 /*************************** SEND DATA TO SERVER **************************/
 void kirim_data()
 {
-  String sn = "2019030011";
-  String sensor1 = "temperature"; //temp
-  String sensor2 = "amonia";      //amonia
-  String sensor3 = "humidity";    //humidity
-  String sensor4 = "fan1";
-  String sensor5 = "fan2";
-  String sensor6 = "fan3";
-  String sensor7 = "fan4";
-  String sensor8 = "heater1";
-  String sensor9 = "cooler1";
-  String sensor10 = "mintemp";
-  String sensor11 = "maxtemp";
+  if (current - previous >= interval)
+  {
+    String sn = "2019030011";
+    String sensor1 = "temperature"; //temp
+    String sensor2 = "amonia";      //amonia
+    String sensor3 = "humidity";    //humidity
+    String sensor4 = "fan1";
+    String sensor5 = "fan2";
+    String sensor6 = "fan3";
+    String sensor7 = "fan4";
+    String sensor8 = "heater1";
+    String sensor9 = "cooler1";
+    String sensor10 = "mintemp";
+    String sensor11 = "maxtemp";
 
-  rtcUpdate();
-  String postData = (String) "&sn=" + sn + "&dgw=" + year + "-" + month + "-" + dayOfMonth + "&tgw=" + hour + ":" + minute + ":" + second +
-                    "&sensor=" + sensor1 + "x" + sensor2 + "x" + sensor3 + "x" + sensor4 + "x" + sensor5 + "x" + sensor6 + "x" + sensor7 + "x" + sensor8 + "x" + sensor9 + "x" + sensor10 + "x" + sensor11 +
-                    "&nilai=" + temp + "x" + ppm + "x" + hum + "x" + fan1 + "x" + fan2 + "x" + fan3 + "x" + fan4 + "x" + cooler1 + "x" + heater1 + "x" + fTempMin + "x" + fTempMax;
+    rtcUpdate();
+    String postData = (String) "&sn=" + sn + "&dgw=" + year + "-" + month + "-" + dayOfMonth + "&tgw=" + hour + ":" + minute + ":" + second +
+                      "&sensor=" + sensor1 + "x" + sensor2 + "x" + sensor3 + "x" + sensor4 + "x" + sensor5 + "x" + sensor6 + "x" + sensor7 + "x" + sensor8 + "x" + sensor9 + "x" + sensor10 + "x" + sensor11 +
+                      "&nilai=" + temp + "x" + ppm + "x" + hum + "x" + fan1 + "x" + fan2 + "x" + fan3 + "x" + fan4 + "x" + cooler1 + "x" + heater1 + "x" + fTempMin + "x" + fTempMax;
 
-  HTTPClient http;
-  http.begin("http://www.smart-gh.com/input2.php?sn=2019030011" + postData);
-  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    HTTPClient http;
+    http.begin("http://www.smart-gh.com/input2.php?sn=2019030011" + postData);
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
-  auto httpCode = http.POST(postData);
-  String payload = http.getString();
+    auto httpCode = http.POST(postData);
+    String payload = http.getString();
 
-  Serial.println(postData);
-  http.end();
+    Serial.println(postData);
+    http.end();
+  }
 }
-
 /********************** END SEND DATA ******************************/

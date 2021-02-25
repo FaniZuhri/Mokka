@@ -307,6 +307,12 @@ void loop()
     //Display Sensor values and RTC to LCD
     mainDisplay();
 
+    //All led OFF
+    ledMenu(0, 0, 0, 0, 0, 0);
+
+    //relay state
+    relay(not fan1, not fan2, not fan3, not fan4, not heater1, not cooler1);
+
     //REST Handler
     rest.handle(client);
 
@@ -337,12 +343,13 @@ void loop()
 
     //Send data sensor to server db via HTTP
     kirim_data();
-    
+
     //If ANY of pin pressed
     if (ok or up or down or cancel)
     {
       delay(delayBtn);
       state = chooseFan1;
+      relay(1,1,1,1,1,1);
       lcd.clear();
     }
     break;
@@ -362,6 +369,7 @@ void loop()
     lcd.print(" Fan 4 State   ");
     lcd.print(fan4);
     Serial.println("choose fan 1");
+    ledMenu(1, 0, 0, 0, 0, 0);
 
     //If button pressed
     if (ok)
@@ -404,6 +412,7 @@ void loop()
     lcd.print(" Fan 4 State   ");
     lcd.print(fan4);
     Serial.println("choose fan 2");
+    ledMenu(0, 1, 0, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -444,6 +453,7 @@ void loop()
     lcd.print(" Fan 4 State   ");
     lcd.print(fan4);
     Serial.println("choose fan 3");
+    ledMenu(0, 0, 1, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -484,6 +494,7 @@ void loop()
     lcd.print(">Fan 4 State   ");
     lcd.print(fan4);
     Serial.println("choose fan 4");
+    ledMenu(0, 0, 0, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -515,6 +526,7 @@ void loop()
     lcd.print(">Fan 1 State   ");
     lcd.print(fan1);
     Serial.println("set fan 1");
+    ledMenu(1, 0, 0, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -546,6 +558,7 @@ void loop()
     lcd.print(">Fan 2 State   ");
     lcd.print(fan2);
     Serial.println("set fan 2");
+    ledMenu(0, 1, 0, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -577,6 +590,7 @@ void loop()
     lcd.print(">Fan 3 State   ");
     lcd.print(fan3);
     Serial.println("set fan 3");
+    ledMenu(0, 0, 1, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -608,6 +622,7 @@ void loop()
     lcd.print(">Fan 4 State   ");
     lcd.print(fan4);
     Serial.println("set fan 4");
+    ledMenu(0, 0, 0, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -644,6 +659,7 @@ void loop()
     lcd.setCursor(0, 2);
     lcd.print(" Set Temp");
     Serial.println("choose heater");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -680,6 +696,7 @@ void loop()
     lcd.setCursor(0, 2);
     lcd.print(" Set Temp");
     Serial.println("choose cooler");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);
@@ -717,6 +734,7 @@ void loop()
     lcd.setCursor(0, 2);
     lcd.print(">Set Temp");
     Serial.println("choose temp menu");
+    ledMenu(0, 0, 0, 0, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -748,6 +766,7 @@ void loop()
     lcd.print(">Heater State   ");
     lcd.print(heater1);
     Serial.println("set heater state");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -779,6 +798,7 @@ void loop()
     lcd.print(">Cooler State   ");
     lcd.print(cooler1);
     Serial.println("set cooler state");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);
@@ -819,6 +839,7 @@ void loop()
     lcd.print(" Temp Heater Min  ");
     lcd.print(hTempMin);
     Serial.println("choose temp fan max");
+    ledMenu(1, 1, 1, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -859,6 +880,7 @@ void loop()
     lcd.print(" Temp Heater Min  ");
     lcd.print(hTempMin);
     Serial.println("choose temp fan min");
+    ledMenu(1, 1, 1, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -899,6 +921,7 @@ void loop()
     lcd.print(" Temp Heater Min  ");
     lcd.print(hTempMin);
     Serial.println("choose heater temp max");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -939,6 +962,7 @@ void loop()
     lcd.print(">Temp Heater Min  ");
     lcd.print(hTempMin);
     Serial.println("choose heater temp min");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -973,6 +997,7 @@ void loop()
     lcd.print(" Temp Cooler Min  ");
     lcd.print(cTempMin);
     Serial.println("choose cooler temp max");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);
@@ -1007,6 +1032,7 @@ void loop()
     lcd.print(">Temp Cooler Min  ");
     lcd.print(cTempMin);
     Serial.println("choose cooler temp min");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);
@@ -1038,6 +1064,7 @@ void loop()
     lcd.print(">Temp Fan Max     ");
     lcd.print(fTempMax);
     Serial.println("set fan temp max");
+    ledMenu(1, 1, 1, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -1069,6 +1096,7 @@ void loop()
     lcd.print(">Temp Fan Min     ");
     lcd.print(fTempMin);
     Serial.println("set fan temp min");
+    ledMenu(1, 1, 1, 1, 0, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -1100,6 +1128,7 @@ void loop()
     lcd.print(">Temp Heater Max  ");
     lcd.print(hTempMax);
     Serial.println("set heater temp max");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -1131,6 +1160,7 @@ void loop()
     lcd.print(">Temp Heater Min  ");
     lcd.print(hTempMin);
     Serial.println("set heater temp min");
+    ledMenu(0, 0, 0, 0, 1, 0);
     if (ok)
     {
       delay(delayBtn);
@@ -1162,6 +1192,7 @@ void loop()
     lcd.print(">Temp Cooler Max  ");
     lcd.print(cTempMax);
     Serial.println("set cooler temp max");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);
@@ -1193,6 +1224,7 @@ void loop()
     lcd.print(">Temp Cooler Min  ");
     lcd.print(cTempMin);
     Serial.println("set cooler temp min");
+    ledMenu(0, 0, 0, 0, 0, 1);
     if (ok)
     {
       delay(delayBtn);

@@ -23,11 +23,12 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiAP.h>
+WiFiClient client;
 
 //Lib API HTTP and REST
 #include <HTTPClient.h>
 #include <aREST.h>
-#define HARDWARE "esp32"
+//#define HARDWARE "esp32"
 
 //Lib MQ137
 #include <MQUnifiedsensor.h>
@@ -36,7 +37,7 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 16 char
 RTC_DS3231 rtc;
 
 // go to aREST.h lib to config variables, functions, and buffer size
-#define OUTPUT_BUFFER_SIZE 
+#define OUTPUT_BUFFER_SIZE 500
 #define NUMBER_VARIABLES 20
 #define NUMBER_FUNCTIONS 20
 
@@ -309,7 +310,7 @@ void loop()
 
   //REST Handler
   WiFiClient client = server.available();
-  rest.handle(client);
+//  rest.handle(client);
 
   //Menu Case
   switch (state)
@@ -317,9 +318,9 @@ void loop()
 
   //Main Menu, this case comes first as defined in void setup
   case mainMenu:
-
+  
     //REST Handler
-    client = server.available();
+//    WiFiClient client = server.available();
     rest.handle(client);
     
     //Display Sensor values and RTC to LCD
@@ -1588,20 +1589,20 @@ int apiCTempMin(String command)
 int apiCTempMax(String command)
 {
   // Get state from command
-  int cMaxState = command.toInt();
-  EEPROM.write(addrCoolMax, cMaxState);
+  int cTempMax = command.toInt();
+  EEPROM.write(addrCoolMax, cTempMax);
   EEPROM.commit();
-  printMessage(cMaxState);
+  printMessage(cTempMax);
   return 1;
 }
 
 int apiPpmTres(String command)
 {
   //Get state from command
-  int ppmTresState = command.toInt();
-  EEPROM.write(addrppmTres, ppmTresState);
+  int ppmTres = command.toInt();
+  EEPROM.write(addrppmTres, ppmTres);
   EEPROM.commit();
-  printMessage(ppmTresState);
+  printMessage(ppmTres);
   return 1;
 }
 

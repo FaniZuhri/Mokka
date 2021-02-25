@@ -12,7 +12,8 @@
                 "/home/zuhri/.arduino15/packages/esp32/hardware/esp32/1.0.4/**",
                 "/home/zuhri/.local/share/umake/electronics/arduino/libraries/**",
                 "/home/zuhri/Arduino/libraries/**",
-                "/home/zuhri/.arduino15/packages/esp32/tools/**"
+                "/home/zuhri/.arduino15/packages/esp32/tools/**",
+                "/home/zuhri/.arduino15/packages/esp32/hardware/esp32/1.0.3/**"
             ],
             "forcedInclude": [],
             "defines": [

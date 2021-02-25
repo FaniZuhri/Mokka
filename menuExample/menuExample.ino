@@ -119,9 +119,9 @@ float ppm, temp, hum, amo;
 
 //EEPROM Address for saving variables
 int addrfan[4] = {2, 4, 6, 8};
-int addrheat = 10, addrcool = 12, addrFanTempMin = 16, addrFanTempMax = 14,
+int addrHeat = 10, addrCool = 12, addrFanTempMin = 16, addrFanTempMax = 14,
     addrHeatMin = 16, addrHeatMax = 18, addrCoolMin = 20, addrCoolMax = 22,
-    addrppmTres = 24;
+    addrPpmTres = 24;
 int addr = 0;
 
 //Pin for LED while in menu
@@ -799,7 +799,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      EEPROM.write(addrheat, heater1);
+      EEPROM.write(addrHeat, heater1);
       EEPROM.commit();
       state = chooseHeater;
       lcd.clear();
@@ -831,7 +831,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      EEPROM.write(addrcool, cooler1);
+      EEPROM.write(addrCool, cooler1);
       EEPROM.commit();
       state = chooseCooler;
       lcd.clear();
@@ -1395,18 +1395,18 @@ void readFromEEPROM()
     EEPROM.write(addrfan[3], fan4);
     EEPROM.commit();
   }
-  cooler1 = EEPROM.read(addrcool);
+  cooler1 = EEPROM.read(addrCool);
   if (cooler1 > 1)
   {
     cooler1 = 1;
-    EEPROM.write(addrcool, cooler1);
+    EEPROM.write(addrCool, cooler1);
     EEPROM.commit();
   }
-  heater1 = EEPROM.read(addrheat);
+  heater1 = EEPROM.read(addrHeat);
   if (heater1 > 1)
   {
     heater1 = 0;
-    EEPROM.write(addrheat, heater1);
+    EEPROM.write(addrHeat, heater1);
     EEPROM.commit();
   }
   fTempMin = EEPROM.read(addrFanTempMin);
@@ -1479,117 +1479,117 @@ void homeDisplay()
 int apiFan1(String command)
 {
   // Get state from command
-  int fan1State = command.toInt();
-  EEPROM.write(addrfan[0], fan1State);
+  fan1 = command.toInt();
+  EEPROM.write(addrfan[0], fan1);
   EEPROM.commit();
-  printMessage(fan1State);
+  printMessage(fan1);
   return 1;
 }
 
 int apiFan2(String command)
 {
   // Get state from command
-  int fan2State = command.toInt();
-  EEPROM.write(addrfan[1], fan2State);
+  fan2 = command.toInt();
+  EEPROM.write(addrfan[1], fan2);
   EEPROM.commit();
-  printMessage(fan2State);
+  printMessage(fan2);
   return 1;
 }
 
 int apiFan3(String command)
 {
   // Get state from command
-  int fan3State = command.toInt();
-  EEPROM.write(addrfan[2], fan3State);
+  fan3 = command.toInt();
+  EEPROM.write(addrfan[2], fan3);
   EEPROM.commit();
-  printMessage(fan3State);
+  printMessage(fan3);
   return 1;
 }
 
 int apiFan4(String command)
 {
   // Get state from command
-  int fan4State = command.toInt();
-  EEPROM.write(addrfan[3], fan4State);
+  fan4 = command.toInt();
+  EEPROM.write(addrfan[3], fan4);
   EEPROM.commit();
-  printMessage(fan4State);
+  printMessage(fan4);
   return 1;
 }
 
 int apiHeater(String command)
 {
   // Get state from command
-  int heaterState = command.toInt();
-  EEPROM.write(addrheat, heaterState);
+  heater1 = command.toInt();
+  EEPROM.write(addrHeat, heater1);
   EEPROM.commit();
-  printMessage(heaterState);
+  printMessage(heater1);
   return 1;
 }
 
 int apiCooler(String command)
 {
   // Get state from command
-  int coolerState = command.toInt();
-  EEPROM.write(addrcool, coolerState);
+  cooler1 = command.toInt();
+  EEPROM.write(addrCool, cooler1);
   EEPROM.commit();
-  printMessage(coolerState);
+  printMessage(cooler1);
   return 1;
 }
 
 int apiFTempMin(String command)
 {
   // Get state from command
-  int tempMinState = command.toInt();
-  EEPROM.write(addrFanTempMin, tempMinState);
+  fTempMin = command.toInt();
+  EEPROM.write(addrFanTempMin, fTempMin);
   EEPROM.commit();
-  printMessage(tempMinState);
+  printMessage(fTempMin);
   return 1;
 }
 
 int apiFTempMax(String command)
 {
   // Get state from command
-  int tempMaxState = command.toInt();
-  EEPROM.write(addrFanTempMax, tempMaxState);
+  fTempMax = command.toInt();
+  EEPROM.write(addrFanTempMax, fTempMax);
   EEPROM.commit();
-  printMessage(tempMaxState);
+  printMessage(fTempMax);
   return 1;
 }
 
 int apiHTempMin(String command)
 {
   // Get state from command
-  int hMinState = command.toInt();
-  EEPROM.write(addrHeatMin, hMinState);
+  hTempMin = command.toInt();
+  EEPROM.write(addrHeatMin, hTempMin);
   EEPROM.commit();
-  printMessage(hMinState);
+  printMessage(hTempMin);
   return 1;
 }
 
 int apiHTempMax(String command)
 {
   // Get state from command
-  int hMaxState = command.toInt();
-  EEPROM.write(addrHeatMax, hMaxState);
+  hTempMax = command.toInt();
+  EEPROM.write(addrHeatMax, hTempMax);
   EEPROM.commit();
-  printMessage(hMaxState);
+  printMessage(hTempMax);
   return 1;
 }
 
 int apiCTempMin(String command)
 {
   // Get state from command
-  int cMinState = command.toInt();
-  EEPROM.write(addrCoolMin, cMinState);
+  cTempMin = command.toInt();
+  EEPROM.write(addrCoolMin, cTempMin);
   EEPROM.commit();
-  printMessage(cMinState);
+  printMessage(cTempMin);
   return 1;
 }
 
 int apiCTempMax(String command)
 {
   // Get state from command
-  int cTempMax = command.toInt();
+  cTempMax = command.toInt();
   EEPROM.write(addrCoolMax, cTempMax);
   EEPROM.commit();
   printMessage(cTempMax);
@@ -1599,8 +1599,8 @@ int apiCTempMax(String command)
 int apiPpmTres(String command)
 {
   //Get state from command
-  int ppmTres = command.toInt();
-  EEPROM.write(addrppmTres, ppmTres);
+  ppmTres = command.toInt();
+  EEPROM.write(addrPpmTres, ppmTres);
   EEPROM.commit();
   printMessage(ppmTres);
   return 1;

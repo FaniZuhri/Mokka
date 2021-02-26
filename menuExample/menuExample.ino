@@ -1,12 +1,36 @@
 //Lib EEPROM for saving variables
 #include "EEPROM.h"
 
+//define EEPROM size
+#define EEPROM_SIZE 100
+
+//Lib API HTTP and REST
+#include <HTTPClient.h>
+#include <aREST.h>
+//#define HARDWARE "esp32"
+
+// go to aREST.h lib to config variables, functions, and buffer size
+#define OUTPUT_BUFFER_SIZE 500
+#define NUMBER_VARIABLES 20
+#define NUMBER_FUNCTIONS 20
+
+// Create aREST instance
+aREST rest = aREST();
+
 //Lib RTC Module
 #include "RTClib.h"
+// define RTC
+#define DS3231_I2C_ADDRESS 0x68
+RTC_DS3231 rtc;
+
+//RTC variables
+char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"};
+String second, minute, hour, dayOfWeek, dayOfMonth, month, year;
 
 //Lib LCD i2c
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 //Lib button
 #include <Button.h>
@@ -15,39 +39,22 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+//define DS18B20 PIN
+#define ONE_WIRE_BUS 15
+OneWire oneWire(ONE_WIRE_BUS);
+
 //Lib SHT21 / SHT30
 // #include <HTU21D.h>
 #include "SHT2x.h"
+
+//Redefining SHT21 lib
+SHT2x SHT2x;
 
 //Lib WiFi
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiAP.h>
 WiFiClient client;
-
-//Lib API HTTP and REST
-#include <HTTPClient.h>
-#include <aREST.h>
-//#define HARDWARE "esp32"
-
-//Lib MQ137
-#include <MQUnifiedsensor.h>
-
-LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 16 chars and 2 line display
-RTC_DS3231 rtc;
-
-// go to aREST.h lib to config variables, functions, and buffer size
-#define OUTPUT_BUFFER_SIZE 500
-#define NUMBER_VARIABLES 20
-#define NUMBER_FUNCTIONS 20
-
-//define EEPROM size
-#define EEPROM_SIZE 100
-
-//define DS18B20 PIN
-#define ONE_WIRE_BUS 15
-OneWire oneWire(ONE_WIRE_BUS);
-
 //set ssid and password ESP32 as Access Point
 const char *ssidAP = "Mustika Controller";
 const char *passwordAP = "mustikajaya";
@@ -55,6 +62,33 @@ const char *passwordAP = "mustikajaya";
 //set ssid and password to WiFi/Hotspot
 const char *ssid = "Zuhri";
 const char *password = "12345678";
+
+//Redefining for making ESP32 as Access Point
+WiFiServer server(80);
+IPAddress AP_IP;
+
+//Lib MQ137
+#include <MQUnifiedsensor.h>
+
+/* MQ-137 INITIALIZATION */
+
+#define AMMONIA_PIN 39
+//AMONIA
+#define RL 47    //The value of resistor RL is 47K
+#define m -0.263 //Enter calculated Slope
+#define b 0.42   //Enter calculated intercept
+
+/************************Hardware Related Macros************************************/
+#define Board ("ESP-32") // Wemos ESP-32 or other board, whatever have ESP32 core.
+#define Pin (36)         //IO25 for your ESP32 WeMos Board, pinout here: https://i.pinimg.com/originals/66/9a/61/669a618d9435c702f4b67e12c40a11b8.jpg
+/***********************Software Related Macros************************************/
+#define Type ("MQ-135")          //MQ135 or other MQ Sensor, if change this verify your a and b values.
+#define Voltage_Resolution (3.3) // 3V3 <- IMPORTANT. Source: https://randomnerdtutorials.com/esp32-adc-analog-read-arduino-ide/
+#define ADC_Bit_Resolution (12)  // ESP-32 bit resolution. Source: https://randomnerdtutorials.com/esp32-adc-analog-read-arduino-ide/
+#define RatioMQ135CleanAir (60)  // Ratio of your sensor, for this example an MQ-3
+/*****************************Globals***********************************************/
+MQUnifiedsensor MQ135(Board, Voltage_Resolution, ADC_Bit_Resolution, Pin, Type);
+/*****************************Globals***********************************************/
 
 //functions that used in REST
 int apiFan1(String command);
@@ -71,16 +105,6 @@ int apiCTempMin(String command);
 int apiCTempMax(String command);
 int apiPpmTres(String command);
 
-// Create aREST instance
-aREST rest = aREST();
-
-//Redefining SHT21 lib
-SHT2x SHT2x;
-
-//Redefining for making ESP32 as Access Point
-WiFiServer server(80);
-IPAddress AP_IP;
-
 //state menu in LCD
 enum menuLcd
 {
@@ -89,10 +113,10 @@ enum menuLcd
   chooseFan2,
   chooseFan3,
   chooseFan4,
-  setFan1,
-  setFan2,
-  setFan3,
-  setFan4,
+  setFan1State,
+  setFan2State,
+  setFan3State,
+  setFan4State,
   chooseHeater,
   chooseCooler,
   chooseTemp,
@@ -102,8 +126,8 @@ enum menuLcd
   chooseHeaterMin,
   chooseCoolerMax,
   chooseCoolerMin,
-  setHeater,
-  setCooler,
+  setHeaterState,
+  setCoolerState,
   setFanMax,
   setFanMin,
   setHeaterMax,
@@ -134,10 +158,6 @@ int okBtn = 12, upBtn = 18, downBtn = 19, cancelBtn = 13, arrowState = 1;
 int fan1, fan2, fan3, fan4, cooler1, heater1, delayBtn = 100, hTempMax, hTempMin, cTempMax, cTempMin, ppmTres;
 int state, stateFTMax, stateFTMin, stateHTMax, stateHTMin, stateCTMax, stateCTMin, count, timeSecond, adc, fTempMin, fTempMax;
 
-//RTC variables
-char daysOfTheWeek[7][12] = {"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"};
-String second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-
 int current, previous = 0, interval = 5000;
 
 //Pin for relay Fan and Heater
@@ -153,26 +173,6 @@ const int relayCooler = 26; // 4
 #define cancel !digitalRead(cancelBtn)
 #define up !digitalRead(upBtn)
 #define down !digitalRead(downBtn)
-
-/* MQ-137 INITIALIZATION */
-
-#define AMMONIA_PIN 39
-//AMONIA
-#define RL 47    //The value of resistor RL is 47K
-#define m -0.263 //Enter calculated Slope
-#define b 0.42   //Enter calculated intercept
-
-/************************Hardware Related Macros************************************/
-#define Board ("ESP-32") // Wemos ESP-32 or other board, whatever have ESP32 core.
-#define Pin (36)         //IO25 for your ESP32 WeMos Board, pinout here: https://i.pinimg.com/originals/66/9a/61/669a618d9435c702f4b67e12c40a11b8.jpg
-/***********************Software Related Macros************************************/
-#define Type ("MQ-135")          //MQ135 or other MQ Sensor, if change this verify your a and b values.
-#define Voltage_Resolution (3.3) // 3V3 <- IMPORTANT. Source: https://randomnerdtutorials.com/esp32-adc-analog-read-arduino-ide/
-#define ADC_Bit_Resolution (12)  // ESP-32 bit resolution. Source: https://randomnerdtutorials.com/esp32-adc-analog-read-arduino-ide/
-#define RatioMQ135CleanAir (60)  // Ratio of your sensor, for this example an MQ-3
-/*****************************Globals***********************************************/
-MQUnifiedsensor MQ135(Board, Voltage_Resolution, ADC_Bit_Resolution, Pin, Type);
-/*****************************Globals***********************************************/
 
 void setup()
 {
@@ -256,6 +256,9 @@ void setup()
   //First state to go to void loop
   state = mainMenu;
 
+  //relay state
+  relay(not fan1, not fan2, not fan3, not fan4, not heater1, not cooler1);
+
   // Give name & ID to the device (ID should be 6 characters long)
   rest.set_id("1");
   rest.set_name("MUSTIKA_CONTROLLER");
@@ -305,12 +308,9 @@ void loop()
 {
   current = millis();
 
-  //Read RTC
-  DateTime now = rtc.now();
-
   //REST Handler
   WiFiClient client = server.available();
-//  rest.handle(client);
+  //  rest.handle(client);
 
   //Menu Case
   switch (state)
@@ -318,11 +318,11 @@ void loop()
 
   //Main Menu, this case comes first as defined in void setup
   case mainMenu:
-  
+
     //REST Handler
-//    WiFiClient client = server.available();
+    //    WiFiClient client = server.available();
     rest.handle(client);
-    
+
     //Display Sensor values and RTC to LCD
     mainDisplay();
 
@@ -342,7 +342,7 @@ void loop()
     Serial.print("Humidity(%RH): ");
     Serial.print(hum, 0);
     Serial.print("\tTemperature(C): ");
-    Serial.print(temp, 0);
+    Serial.println(temp, 0);
     mainDisplay();
     delay(500);
 
@@ -404,7 +404,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setFan1;
+      state = setFan1State;
       lcd.clear();
     }
     if (up)
@@ -445,7 +445,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setFan2;
+      state = setFan2State;
       lcd.clear();
     }
     if (up)
@@ -486,7 +486,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setFan3;
+      state = setFan3State;
       lcd.clear();
     }
     if (up)
@@ -527,7 +527,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setFan4;
+      state = setFan4State;
       lcd.clear();
     }
     if (up)
@@ -550,7 +550,7 @@ void loop()
     }
     break;
 
-  case setFan1:
+  case setFan1State:
     lcd.setCursor(0, 0);
     lcd.print(">Fan 1 State   ");
     lcd.print(fan1);
@@ -582,7 +582,7 @@ void loop()
     };
     break;
 
-  case setFan2:
+  case setFan2State:
     lcd.setCursor(0, 1);
     lcd.print(">Fan 2 State   ");
     lcd.print(fan2);
@@ -614,7 +614,7 @@ void loop()
     };
     break;
 
-  case setFan3:
+  case setFan3State:
     lcd.setCursor(0, 2);
     lcd.print(">Fan 3 State   ");
     lcd.print(fan3);
@@ -646,7 +646,7 @@ void loop()
     };
     break;
 
-  case setFan4:
+  case setFan4State:
     lcd.setCursor(0, 3);
     lcd.print(">Fan 4 State   ");
     lcd.print(fan4);
@@ -692,7 +692,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setHeater;
+      state = setHeaterState;
       lcd.clear();
     }
     if (up)
@@ -729,7 +729,7 @@ void loop()
     if (ok)
     {
       delay(delayBtn);
-      state = setCooler;
+      state = setCoolerState;
       lcd.clear();
     }
     if (up)
@@ -790,7 +790,7 @@ void loop()
     }
     break;
 
-  case setHeater:
+  case setHeaterState:
     lcd.setCursor(0, 0);
     lcd.print(">Heater State   ");
     lcd.print(heater1);
@@ -822,7 +822,7 @@ void loop()
     };
     break;
 
-  case setCooler:
+  case setCoolerState:
     lcd.setCursor(0, 1);
     lcd.print(">Cooler State   ");
     lcd.print(cooler1);
@@ -1296,13 +1296,6 @@ void rtcUpdate()
   dayOfMonth = (now.day());
   month = (now.month());
   year = (now.year());
-
-  Serial.print(second);
-  Serial.print(minute);
-  Serial.print(hour);
-  Serial.print(dayOfMonth);
-  Serial.print(month);
-  Serial.println(year);
 }
 byte bcdToDec(byte val)
 {
@@ -1451,6 +1444,7 @@ void readFromEEPROM()
     EEPROM.write(addrCoolMax, cTempMax);
     EEPROM.commit();
   }
+  ppmTres = EEPROM.read(addrPpmTres);
 }
 
 void homeDisplay()

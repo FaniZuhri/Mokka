@@ -184,6 +184,10 @@ void setup()
     ;
 #endif
 
+  //set esp wdt
+  ESP.wdtDisable();
+  ESP.wdtEnable(WDTO_8S);
+
   //Start SHT21
   SHT2x.begin();
 
@@ -306,6 +310,7 @@ void setup()
 
 void loop()
 {
+  ESP.wdtFeed();
   current = millis();
 
   //REST Handler
